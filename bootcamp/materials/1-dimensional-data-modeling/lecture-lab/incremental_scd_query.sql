@@ -107,4 +107,4 @@ SELECT *, 2022 AS current_season FROM (
 
                   SELECT *
                   FROM new_records
-              ) a
+              )
