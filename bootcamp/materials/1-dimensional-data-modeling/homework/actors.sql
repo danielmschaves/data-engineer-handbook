@@ -1,3 +1,4 @@
+-- Task 1: DDL para tabela actors e tipos necessários
 CREATE TYPE film_details AS (
     film text,
     votes integer,
