@@ -1,13 +1,14 @@
+-- Task 4: Query de backfill para actors_history_scd
 WITH streak_started AS (
     SELECT 
         actor_name,
         actorid,
-        current_season,
+        current_year,
         quality_class,
         is_active,
-        LAG(quality_class, 1) OVER (PARTITION BY actorid ORDER BY current_season) <> quality_class
-        OR LAG(is_active, 1) OVER (PARTITION BY actorid ORDER BY current_season) <> is_active
-        OR LAG(quality_class, 1) OVER (PARTITION BY actorid ORDER BY current_season) IS NULL
+        LAG(quality_class, 1) OVER (PARTITION BY actorid ORDER BY current_year) <> quality_class
+        OR LAG(is_active, 1) OVER (PARTITION BY actorid ORDER BY current_year) <> is_active
+        OR LAG(quality_class, 1) OVER (PARTITION BY actorid ORDER BY current_year) IS NULL
         AS did_change
     FROM actors
 ),
@@ -17,9 +18,9 @@ streak_identified AS (
         actorid,
         quality_class,
         is_active,
-        current_season,
+        current_year,
         SUM(CASE WHEN did_change THEN 1 ELSE 0 END)
-            OVER (PARTITION BY actorid ORDER BY current_season) as streak_identifier
+            OVER (PARTITION BY actorid ORDER BY current_year) as streak_identifier
     FROM streak_started
 ),
 aggregated AS (
@@ -29,8 +30,8 @@ aggregated AS (
         quality_class,
         is_active,
         streak_identifier,
-        MIN(current_season) AS start_season,
-        MAX(current_season) AS end_season
+        MIN(current_year) AS start_date,
+        MAX(current_year) AS end_date
     FROM streak_identified
     GROUP BY 1,2,3,4,5
 )
@@ -39,17 +40,17 @@ INSERT INTO actors_history_scd (
     actorid,
     quality_class,
     is_active,
-    start_season,
-    end_season,
-    current_season
+    start_date,
+    end_date,
+    current_year
 )
 SELECT 
     actor_name,
     actorid,
     quality_class,
     is_active,
-    start_season,
-    end_season,
-    end_season as current_season  -- usando end_season como current_season
+    start_date,
+    end_date,
+    end_date as current_year
 FROM aggregated
-ORDER BY actorid, start_season;
+ORDER BY actorid, start_date;
